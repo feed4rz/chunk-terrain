@@ -1,0 +1,78 @@
+<canvas width="1024" height="1024" id="context"></canvas>
+<script src="assets/js/perlin.js"></script>
+<script>
+	let ctx = document.getElementById('context').getContext('2d');
+	
+	let global = {
+		square : {
+			size : 4
+		},
+		chunk : {
+			size : 32,
+		},
+		noise : {
+			type : 'perlin'
+		}
+	}
+	
+	let noise_maps = {
+		0 : noise,
+		1 : noise,
+		2 : noise,
+		3 : noise
+	};
+	
+	noise_maps[0].seed(Math.random());
+	noise_maps[1].seed(Math.random());
+	noise_maps[2].seed(Math.random());
+	noise_maps[3].seed(Math.random());
+	
+	class Chunk {
+		constructor(ctx, x, y, noise_maps, noise_type){
+			this.ctx = ctx;
+			this.x = x * global.chunk.size;
+			this.y = y * global.chunk.size;
+			this.noise_maps = noise_maps;
+			this.noise_type = noise_type;
+			
+			this.render();
+		}
+		
+		drawDot(height, x, y){
+			let blue = 255 - height*10;
+			let green = 5 + height*10
+			this.ctx.fillStyle="rgb(0,"+green+","+blue+")";
+			
+			this.ctx.fillRect(x * global.square.size,y * global.square.size, global.square.size, global.square.size);
+		}
+		
+		render(){
+			let i = this;
+		
+			for(let x = 0; x < global.chunk.size; x++){
+				for(let y = 0; y < global.chunk.size; y++){
+					let value = 0;
+					if(this.noise_type == 'perlin'){
+						value = (this.noise_maps[0].perlin2((i.x + x) / global.chunk.size, (i.y + y) / global.chunk.size)
+						+ this.noise_maps[1].perlin2((i.x + x) / global.chunk.size, (i.y + y) / global.chunk.size)
+						+ this.noise_maps[2].perlin2((i.x + x) / global.chunk.size, (i.y + y) / global.chunk.size)
+						+ this.noise_maps[3].perlin2((i.x + x) / global.chunk.size, (i.y + y) / global.chunk.size)) / 4;
+					} else if(this.noise_type == 'simplex'){
+						value = (this.noise_maps[0].simplex2((i.x + x) / global.chunk.size, (i.y + y) / global.chunk.size)
+						+ this.noise_maps[1].simplex2((i.x + x) / global.chunk.size, (i.y + y) / global.chunk.size)
+						+ this.noise_maps[2].simplex2((i.x + x) / global.chunk.size, (i.y + y) / global.chunk.size)
+						+ this.noise_maps[3].simplex2((i.x + x) / global.chunk.size, (i.y + y) / global.chunk.size)) / 4;
+					}
+					
+					i.drawDot(Math.round(value * 25), (i.x + x), (i.y + y));
+				}
+			}
+		}
+	}
+	
+	for(let x = 0; x < 8; x++){
+		for(let y = 0; y < 8; y++){
+			new Chunk(ctx, x, y, noise_maps, global.noise.type);
+		}
+	}
+</script>
